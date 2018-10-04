@@ -1,0 +1,35 @@
+*.class
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+*~
+.DS_Store
+.idea/
+*.iml
+target/
+*.orig
+
+*/.classpath
+*/.project
+*/.settings/
+.project
+.settings/
+
+
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+spark-app/scalastyle-output.xml
+checkstyle/checkstyle.xml
+findbugs/exclusions.xml
+git/git-workflow.sh
+intellij/code-style.xml
+**/META-INF/*
+pmd/ruleset.xml
+scalastyle-output.xml
