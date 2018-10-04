@@ -10,15 +10,22 @@ import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 
 /**
- * A data source reader is responsible to define the schema of the dataframe (readSchema) and to create the datasource
- * reader factories(createDataReaderFactories). The reader factories are objects which are serialized to the workers. A
- * factory is generated for each partition and is used to create the object that reads the actual partition.
+ * A data source reader is responsible to define the schema of the dataframe (readSchema) and to create the underlying
+ * RDD partitions (planInputPartitions). The partitions are objects which are serialized to the executors to handle the
+ * reading from the worker side.
  */
 class TrivialDataSourceReader extends DataSourceReader {
+  /**
+   * Returns an inferred schema (A constant one in these case)
+   */
   override def readSchema(): StructType = StructType(Array(StructField("value", StringType)))
 
+  /**
+   * Defines the partitions. This returns a java list (to be compatible with java) of [[InputPartition]] which represent
+   * the different partitions of the underlying RDD read.
+   */
   override def planInputPartitions(): util.List[InputPartition[InternalRow]] = {
-    val factoryList = new java.util.ArrayList[InputPartition[InternalRow]]
+    val factoryList = new java.util.ArrayList[InputPartition[InternalRow]]()
     factoryList.add(new TrivialDataSourcePartition())
     factoryList
   }
