@@ -16,11 +16,7 @@ class InternalRowDataSourceTest extends FunSuite with DiagrammedAssertions with 
     // Nominally, additional parameters can be added (most commonly options, however in this simple case we simply
     // load in order to get the actual dataframe.
     val df = spark.read.format("com.example.sources.internal.row.reader").load()
-    df.printSchema()
     df.show()
-    val a: Array[Row] = df.collect()
-    val b = a(0).toSeq
-    println(b)
 /*
     // Simple validation of the schema and values expected. Our simple source has one column: value (which is a string)
     // and includes 5 rows containing the string values 1 to 5

@@ -7,9 +7,11 @@ import org.apache.spark.sql.sources.v2.reader.DataSourceReader
 import org.apache.spark.sql.sources.v2.reader.InputPartition
 import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.types.BooleanType
+import org.apache.spark.sql.types.DateType
 import org.apache.spark.sql.types.FloatType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.LongType
+import org.apache.spark.sql.types.MapType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
@@ -40,9 +42,12 @@ object InternalRowDataSourceReader {
                      StructField("integer", IntegerType),
                      StructField("long", LongType),
                      StructField("timestamp", TimestampType),
+                     StructField("date", DateType),
                      StructField("float", FloatType),
                      StructField("Array[String]", ArrayType(StringType)),
-                     StructField("Array[Long]", ArrayType(StringType)),
+                     StructField("Array[Long]", ArrayType(LongType)),
+                     StructField("Map[String, String]", MapType(StringType, StringType)),
+                     StructField("Struct of int", StructType(Array(StructField("internalInt", IntegerType)))),
                      StructField("boolean", BooleanType)))
   }
 }
