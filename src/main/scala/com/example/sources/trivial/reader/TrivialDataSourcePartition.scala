@@ -10,5 +10,11 @@ import org.apache.spark.sql.sources.v2.reader.InputPartitionReader
  * does the actual reading.
  */
 class TrivialDataSourcePartition extends InputPartition[InternalRow]  {
+  /**
+   * Returns an input partition reader to do the actual reading work.
+   *
+   * If this method fails (by throwing an exception), the corresponding Spark task would fail and
+   * get retried until hitting the maximum retry times.
+   */
   override def createPartitionReader(): InputPartitionReader[InternalRow]  = new TrivialDataSourcePartitionReader()
 }

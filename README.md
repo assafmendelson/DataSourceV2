@@ -22,5 +22,12 @@ The purpose of this source is to explain the basics of creating a data source.
 It creates a source which always reads the same content which is built-in memory.
 
 For a basic overview of a data source and the simple example see
-[src/main/scala/com/example/sources/trivial/reader/README.md](src/main/scala/com/example//trivial/reader/README.md)
+[src/main/scala/com/example/sources/trivial/reader/README.md](src/main/scala/com/example/trivial/reader/README.md)
+
+## Example 2: Internal Row exploration
+
+The purpose of htis source is to go deeper into the means to create an InternalRow.
+
+See [src/main/scala/com/example/sources/internal/row/reader/README.md](src/main/scala/com/example/internal/row/reader/README.md) for more information.
+ 
 

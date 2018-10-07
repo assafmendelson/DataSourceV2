@@ -11,7 +11,7 @@ import org.apache.spark.sql.types.StructType
 /**
  * Usage example for using the trivial reader
  */
-class DataSourceTest extends FunSuite with DiagrammedAssertions with SharedSparkSession {
+class TrivialDataSourceTest extends FunSuite with DiagrammedAssertions with SharedSparkSession {
 
   test("Some test") {
     // all data sources can be accessed by doing spark.read.format(packageName) where spark is the spark session.

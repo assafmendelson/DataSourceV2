@@ -15,24 +15,25 @@ import java.sql.Timestamp
 object DummyLegacySourceRead {
   /**
    * A schema of the available fields. The filed name (column name) serves as the key and the value is a string
-   * representation of the type. Currently (for the example) the following types are supported: Long, Int, String,
-   * Timestamp and Array[String].
+   * representation of the type. Currently (for the example) the following types are supported: Long, String,
+   * Timestamp and Array[String] (Int is also used but only for partition).
    *
    * It can be assumed that the "id" column would be a unique identifier and that the "partition" column has records
    * divided into it by round robin.
+   *
    */
   lazy val schema: Map[String, String] = Map("id" -> "Long", "partition" -> "Int", "stringData" -> "String",
                                              "timeData" -> "Timestamp", "arrayData" -> "Array[String]")
-
 
   /**
    * Simulates reading a query from the database.
    * @param selectedFields The fields to read
    * @param filter filtering options in the form of a method which receives a record (which is a Map from column name
    *               to value) and returns true if it should be part of the filtering
-   * @return An iterator of the records
+   * @return An iterator of the records where the records are defined as a sequence of values in the same order as
+   *         the selectedFields argument
    */
-  def getReadIterator(selectedFields: Seq[String], filter: Map[String, Any] => Boolean): Iterator[Map[String, Any]] = {
+  def getReadIterator(selectedFields: Seq[String], filter: Map[String, Any] => Boolean): Iterator[Seq[Any]] = {
     allRecords.filter(filter).map(rec => filterFields(rec, selectedFields)).toIterator
   }
 
@@ -72,15 +73,12 @@ object DummyLegacySourceRead {
   }
 
   /**
-   * Method to filter the fields of a record to include exactly the required ones
+   * Method to filter the fields of a record to include exactly the required ones with values in the correct order
    * @param rec The input record to filter
    * @param fields The fields to include
-   * @return The modified record
+   * @return The modified record as a sequence of values in the same order as the fields argument
    */
-  private def filterFields(rec: Map[String, Any], fields: Seq[String]): Map[String, Any] = {
-    // can't have fields which are not part of the record
-    require(fields.forall(rec.keySet.contains))
-    // remove all fields not part of the requested fields
-    rec.filterKeys(fieldName => fields.contains(fieldName))
+  private def filterFields(rec: Map[String, Any], fields: Seq[String]): Seq[Any] = {
+    fields.map(fieldName => rec.getOrElse(fieldName, null))
   }
 }
