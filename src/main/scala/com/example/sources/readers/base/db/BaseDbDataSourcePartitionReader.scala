@@ -1,6 +1,6 @@
 package com.example.sources.readers.base.db
 
-import com.example.common.DummyLegacySourceQuery
+import com.example.common.MockLegacyDataSourceQuery
 
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.sources.v2.reader.InputPartitionReader
@@ -23,7 +23,7 @@ class BaseDbDataSourcePartitionReader(val partition: Int, val numPartitions: Int
   // is the current partition (i.e. round robin between partitions).
   private def filter(rec: Map[String, Int]): Boolean = (rec("id") % numPartitions) == (partition - 1)
   // create the appropriate query. Assume we just take "id"
-  lazy val query: DummyLegacySourceQuery = new DummyLegacySourceQuery(Seq("id"), filter)
+  lazy val query: MockLegacyDataSourceQuery = new MockLegacyDataSourceQuery(Seq("id"), filter)
 
   override def next: Boolean = query.hasNext
 

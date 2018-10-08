@@ -8,7 +8,7 @@ package com.example.common
  *               in the query result.
  *
  */
-class DummyLegacySourceQuery(selectedFields: Seq[String], filter: Map[String, Int] => Boolean)  {
+class MockLegacyDataSourceQuery(selectedFields: Seq[String], filter: Map[String, Int] => Boolean)  {
   /**
    * @return true if there are more records in the query results and false otherwise
    */
@@ -31,9 +31,9 @@ class DummyLegacySourceQuery(selectedFields: Seq[String], filter: Map[String, In
   }
 
   // validates that all selected fields are legal
-  require(selectedFields.forall(DummyLegacySourceQuery.fieldNames.contains))
+  require(selectedFields.forall(MockLegacyDataSourceQuery.fieldNames.contains))
 
-  private val records: Seq[Map[String, Int]] = DummyLegacySourceQuery.allRecords.filter(filter).map(rec => {
+  private val records: Seq[Map[String, Int]] = MockLegacyDataSourceQuery.allRecords.filter(filter).map(rec => {
     rec.filterKeys(field => selectedFields.contains(field))})
 
   private var index: Int = 0
@@ -41,12 +41,12 @@ class DummyLegacySourceQuery(selectedFields: Seq[String], filter: Map[String, In
   private var closed: Boolean = false
 }
 
-object DummyLegacySourceQuery {
+object MockLegacyDataSourceQuery {
   // predefined number of records
   private final val NUM_RECORDS = 20
   // number of extra fields (the table would have an "id" columns and additional NUM_EXTRA_FIELDS columns named col#
   // where # is a number between 1 and NUM_EXTRA_FIELDS
-  private final val NUM_EXTRA_FIELDS = 10
+  private final val NUM_EXTRA_FIELDS = 4
 
   /** A list of all field names in the table */
   lazy val fieldNames: Seq[String] = allRecords.head.keys.toSeq

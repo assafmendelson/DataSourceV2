@@ -1,27 +1,23 @@
-Trivial data source reading example
-===================================
+Reading from database with schema and partitions.
+=================================================
 
-This is the most trivial example for a data source V2.
+The [trivial source example](../../trivial/README.md) shows us how to create the most basic source. Now we will expand on this source by making it query a database (a mock database example, see [the readme](../../../../common/README.md) and [code](../../../../common/MockLegacyDataSourceQuery.scala)). In addition, this example adds support for defining options, supporting multiple partitions and changing the schema.
 
-The data source creates a dataframe with a fixed schema (one column named value which is a string) and contains 5 rows with the values "1", "2", "3", "4" and "5".
-
-Creating a simple data source involves the creation of four classes:
-
-- DefaultSource: The entry point to the data source
-- a DataSourceReader: responsible for defining the schema and partitions
-- InputPartition: the definition of a single partition (the portion serialized to the workers)
-- InputPartitionReader: Does the actual reading of a single partition
-
-The main process is:
-
-**DefaultSource** creates a **DataSourceReader** which creates 1 or more **InputPartitions** which are serialized to the workers where each **InputPartition** creates an **InputPartitionReader** which fills the partition with data from the source
-
+The description here will repeat some of the logic in [trivial source example](../../trivial/README.md) for clarity.
 
 ## DefaultSource
 
+The [full code can be found here](./DefaultSource.scala)
+
 ```scala
 class DefaultSource extends DataSourceV2 with ReadSupport {
-  override def createReader(options: DataSourceOptions): DataSourceReader = new TrivialDataSourceReader()
+  override def createReader(options: DataSourceOptions): DataSourceReader = {
+    createReader(StructType(Array(StructField("id", IntegerType))), options)
+  }
+  override def createReader(schema: StructType, options: DataSourceOptions): DataSourceReader = {
+    val numPartitions = options.getInt("num_partitions", 1) // extract the relevant option with a default of 1 partition
+    new BaseDbDataSourceReader(numPartitions, schema) // initialize the reader with the relevant extracted options
+  }
 }
 ```
 
@@ -31,37 +27,51 @@ All data sources must extend the DataSourceV2 interface which simply marks them 
 
 The name of the class must be DefaultSource in order to be able to use the package as the format name.
 
-In this simple example the data source should support simple reading (i.e. ```spark.read.format(packagename)```) and therefore implements the ReadSupport trait. A more generic data source may implement additional traits (e.g. for writing)
+In this example we implement reader (hence the ```ReadSupport```) trait. 
 
-The ReadSupport trait requires a createReader method which receives options and returns a DataSourceReader. This enables one to do something like ```spark.read.format(packagename).option("someKey", "someValue")```. In this example, for simplicity we ignore the options.
+There are two way to read from a data source:
+- By letting the datasource infer the schema itself, e.g.:
+```scala
+val df = spark.read.format(packageName).load()
+```
+- By explicitly settings the schema, e.g.:
+```scala
+val df = spark.read.format(packageName).schema(schema).load()
+```
 
+The first option (infer schema) uses the first version of the createReader method (```createReader(options: DataSourceOptions)```) while the second (schema explicitly defined by the caller) uses the second version (```createReader(schema: StructType, options: DataSourceOptions)```).
+
+By default the first version is abstract (i.e. must be implemented) but the second has a default implementation which throws an exception. This means that by default (implementing just the abstract version) the datasource can infer schema and will throw an exception on an explicit one.
+In this example, support for both option is given and the schema is actually passed to the DataSourceReader as one of its arguments.
+
+While the trivial example has no options, most (if not all) data sources require some configuration. Many examples can be found in the built-in Spark data sources. For example, the csv data source has options such as "sep" to set the separator and inferSchema to try to figure out the schema as opposed to setting all columns to String.
+
+For the purpose of this example, a single option would be supported: num_partitions. we use the getInt method of the options to extract the value of the option, convert it to integer and set a default value of 1 if the option is not defined.
 
 ## DataSourceReader
+The [full code can be found here](./BaseDbDataSourceReader.scala)
 
 ```scala
-class TrivialDataSourceReader extends DataSourceReader {
-  override def readSchema(): StructType = StructType(Array(StructField("value", StringType)))
+class BaseDbDataSourceReader(val numPartitions: Int, val schema: StructType) extends DataSourceReader {
+  require(numPartitions > 0, "Number of partitions must be positive")
+  require(schema.fields.length == 1, "Only support one field")
+  require(schema.fields.head.dataType == IntegerType || schema.fields.head.dataType == FloatType, "Only int and float supported" )
+
+  override def readSchema(): StructType = schema
+
+  private def createSinglePartition(partition: Int): InputPartition[InternalRow] = {
+    new BaseDbDataSourcePartition(partition, numPartitions, schema.fields.head.dataType)
+  }
 
   override def planInputPartitions(): util.List[InputPartition[InternalRow]] = {
-    val factoryList = new java.util.ArrayList[InputPartition[InternalRow]]
-    factoryList.add(new TrivialDataSourcePartition())
-    factoryList
+    (0 to numPartitions).map(createSinglePartition).asJava
   }
 }
 ```
 
 A DataSourceReader is responsible for managing the read process. It does so by implementing two methods:
-- readSchema: Used to infer the schema of the dataframe (StructType)
-- planInputPartitions: Used to create a list of partitions
-
-The TrivialDataSourceReader extends DataSourceReader and implements these two methods.
-- It's schema is a simple constant schema.
-
-- planInputPartitions generates a list of partitions.
-  - The list is java.util.List for easier java integration.
-  - The different partitions object will later be serialized to the workers. Here we are generating only a single partition of type TrivialDataSourcePartition which represent a single partition in our dummy source
-
-> Note: The signature of ```DataSourceReader.planInputPartitions``` changed in Spark 2.4.0. In Spark 2.3.0 it was called ```createDataReaderFactories``` and returned a list of ```DataReaderFactory[Row]``` instead of ```InputPartition[InternalRow]```. The logic, however, remained the same.
+- ```readSchema```: Defines the schema of the dataframe. Since the schema was passed on from the DataSource, we can simply return it.
+- ```planInputPartitions```: Used to create a list of partitions. In this case the number of partitions is provided in the constructor and therefore we simply map over it creating a java list of the InputPartition objects. We configure each object with common configuration (numPartitions and data type for the schema) as well as specific configuration (different partition id for each partition)
 
 ## InputPartition
 
@@ -84,28 +94,32 @@ The TrivialDataSourcePartition simply creates a TrivialDataSourcePartitionReader
 # InputPartitionReader
 
 ```scala
-class TrivialDataSourcePartitionReader extends InputPartitionReader[InternalRow] {
-  val values: Array[String] = Array("1", "2", "3", "4", "5")
+class BaseDbDataSourcePartitionReader(val partition: Int, val numPartitions: Int,
+                                      val fieldType: DataType) extends InputPartitionReader[InternalRow] {
 
-  var index: Int = 0
+  private def filter(rec: Map[String, Int]): Boolean = (rec("id") % numPartitions) == (partition - 1)
 
-  override def next: Boolean = index < values.length
+  lazy val query: MockLegacyDataSourceQuery = new MockLegacyDataSourceQuery(Seq("id"), filter)
+
+  override def next: Boolean = query.hasNext
 
   override def get: InternalRow = {
-    val row = InternalRow(org.apache.spark.unsafe.types.UTF8String.fromBytes(values(index).getBytes("UTF-8")))
-    index = index + 1
-    row
+    val v: Int = query.next()("id")
+    InternalRow(fieldType match {
+      case _: IntegerType => v
+      case _: FloatType => v.toFloat
+    })
   }
 
-  override def close(): Unit = {}
+  override def close(): Unit = {
+    query.close()
+  }
+}
 }
 ```
 
-This is an iterator of internal row, i.e. the following methods should be implemented:
-- next: A Boolean whether or not there are more rows
-- get: Returns the next row
-- close: used on the end so we can close any connections.
+InputPartitionReader is responsible for the actual reading. In the constructor we create a new db connection (which also defines the specific filter for this partition based on the partition id).
 
-Beyond a basic iterator implementation, the important issue to note here is the fact that it iterates on **InternalRow**. THe constructor of InternalRow assumes relevant **Internal** Spark types. In this example, it needs to receive ```org.apache.spark.unsafe.types.UTF8String``` instead of a regular string.
+next and get are basic iterator behavior with the value from the database being converted to the relevant data type for the schema (see [internal row example](../../internal.row/README.md) for more information on the conversion).
 
-> Note: This is perhaps the biggest change from Spark 2.3.0 where an iterator of Row was used which enabled the use of regular java objects (i.e. String was automatically converted behind the scenes). In addition, the name of the base class was changed from ```DataReader[Row]``` in Spark 2.3.0 to ```InputPartitionReader[InternalRow]``` in Spark 2.4.0
+Lastly closing the InputPartitionReader means closing the database connection

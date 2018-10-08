@@ -7,9 +7,9 @@ The data source creates a dataframe with a fixed schema (one column named value 
 
 Creating a simple data source involves the creation of four classes:
 
-- DefaultSource: The entry point to the data source
-- a DataSourceReader: responsible for defining the schema and partitions
-- InputPartition: the definition of a single partition (the portion serialized to the workers)
+- DefaultSource: The entry point to the data source. This class is responsible to translate the generic interface (spark.read.format with all relevant options) to the specific DataSourceReader, for example converting generic options to specific values.
+- a DataSourceReader: This is responsible for managing the reading. It defines the schema and partitions and all logic needed for the specific reading. It uses mixin with various traits to add additional logic (e.g. predicate pushdown, column pruning). Results in a list of InputPartitions.
+- InputPartition: Defines a single partition. This contains all information needed to CREATE a partition. This is serialized to the workers where it will serve as a factor to create the InputPartitionReader
 - InputPartitionReader: Does the actual reading of a single partition
 
 The main process is:
