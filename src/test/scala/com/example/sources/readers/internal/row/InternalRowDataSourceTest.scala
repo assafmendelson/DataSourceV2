@@ -1,4 +1,4 @@
-package com.example.sources.internal.row.reader
+package com.example.sources.readers.internal.row
 
 import com.example.common.SharedSparkSession
 import org.scalatest.DiagrammedAssertions
@@ -15,7 +15,7 @@ class InternalRowDataSourceTest extends FunSuite with DiagrammedAssertions with 
     // all data sources can be accessed by doing spark.read.format(packageName) where spark is the spark session.
     // Nominally, additional parameters can be added (most commonly options, however in this simple case we simply
     // load in order to get the actual dataframe.
-    val df = spark.read.format("com.example.sources.internal.row.reader").load()
+    val df = spark.read.format("com.example.sources.readers.internal.row").load()
     df.show()
 /*
     // Simple validation of the schema and values expected. Our simple source has one column: value (which is a string)

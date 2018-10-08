@@ -1,4 +1,4 @@
-package com.example.sources.trivial.reader
+package com.example.sources.readers.trivial
 
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.sources.v2.reader.InputPartitionReader
@@ -19,7 +19,7 @@ class TrivialDataSourcePartitionReader extends InputPartitionReader[InternalRow]
 
   /** Get the next record (row) */
   override def get: InternalRow = {
-    val row = InternalRow(org.apache.spark.unsafe.types.UTF8String.fromBytes(values(index).getBytes("UTF-8")))
+    val row = InternalRow(org.apache.spark.unsafe.types.UTF8String.fromString(values(index)))
     index = index + 1
     row
   }

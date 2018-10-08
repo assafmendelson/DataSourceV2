@@ -1,4 +1,4 @@
-package com.example.sources.internal.row.reader
+package com.example.sources.readers.internal.row
 
 import java.sql.Date
 import java.sql.Timestamp

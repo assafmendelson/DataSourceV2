@@ -15,19 +15,20 @@ The project is built using sbt and is not aimed to create a real library. Instea
 
 In addition to the sources packages, a commons package (com.example.common) package which includes utilities used in multiple examples.
 
-For more information on the commons package see [src/main/scala/com/example/common/README.md](src/main/scala/com/example/common/README.md)
+For more information on the commons package see [the package description](src/main/scala/com/example/common/README.md)
 
 ## Example 1: Trivial reader
 The purpose of this source is to explain the basics of creating a data source.
 It creates a source which always reads the same content which is built-in memory.
 
 For a basic overview of a data source and the simple example see
-[src/main/scala/com/example/sources/trivial/reader/README.md](src/main/scala/com/example/trivial/reader/README.md)
+[the source description](src/main/scala/com/example/sources/readers/trivial/README.md)
 
 ## Example 2: Internal Row exploration
 
-The purpose of htis source is to go deeper into the means to create an InternalRow.
 
-See [src/main/scala/com/example/sources/internal/row/reader/README.md](src/main/scala/com/example/internal/row/reader/README.md) for more information.
+The purpose of this source is to go deeper into the means to create an InternalRow.
+
+See [the source description](src/main/scala/com/example/sources/readers/internal/row/README.md) for more information.
  
 

@@ -1,13 +1,15 @@
 Internal Row data source reading example
 ========================================
 
-As mentioned in the [trivial example](../../internal/row/reader/README.md) data source, Each row much be converted to InternalRow. This example explores this further.
+As mentioned in the [trivial source example](../../trivial/README.md) data source, Each row much be converted to InternalRow. This example explores this further.
 
-[This source](../DefaultSource.scala) is similar to the [trivial example](../../internal/row/reader/README.md) with the difference that a complex scehma with the types described below is used. Each row contains a different method of generating the InternalRow to provide a more comprehensive example.
+The implementation of this source is very similar to the [trivial source example](../../trivial/README.md). The main differences are in the addition  of [InternalRowDataSourceReader](./InternalRowDataSourceReader.scala) object which contains a complex schema (containing several different data types) and with the way [InternalRowDataSourcePartitionReader](./InternalRowDataSourcePartitionReader.scala) is implemented to support this.
 
-There are two ways to create an InternalRow: By using InternalRows constructors using Spark's internal representation or by using an encoder
+The implementation contains 4 rows where each row contains a different method of generating the InternalRow to provide a more comprehensive example.
 
-## Using Spark's internal representation
+There are two main ways to create an InternalRow: By using InternalRow's constructors (which use Spark's internal object representation) or by using an encoder
+
+## Using Spark's internal object representation
 
 The simplest way to create an internal row object is by using the InternalRow constructor (apply or fromSeq):
 
@@ -112,7 +114,7 @@ val encoder: ExpressionEncoder[Row] = RowEncoder.apply(InternalRowDataSourceRead
 val internalRow = encoder.toRow(Row(val1, val2, val3))
 ```
 
-This is of course simpler to create and use, however, this my have an adverse effect on performance.
+The values here are simple java object (string, array etc.) matching the schema. The only non trivial object is a struct type which is represented by a Row (not necessarily an internal row)
 
-Note that here also, an internal struct is represented by a Row.
+This is of course simpler to create and use, however, this my have an adverse effect on performance. Note that the creation of the encoder is best suited for the constructor of the InputPartitionReader
 

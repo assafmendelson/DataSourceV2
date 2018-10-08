@@ -1,4 +1,4 @@
-package com.example.sources.trivial.reader
+package com.example.sources.readers.trivial
 
 import java.util
 

@@ -1,4 +1,4 @@
-package com.example.sources.trivial.reader
+package com.example.sources.readers.trivial
 
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.sources.v2.reader.InputPartition
